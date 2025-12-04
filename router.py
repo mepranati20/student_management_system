@@ -17,6 +17,25 @@ from core.responses import send_404
 from core.middleware import add_cors_headers
 
 
+FRONTEND_ROUTES = {"/", "/home", "/students", "/docs"}
+
+def handle_ui_routes(handler, path):
+    if path in FRONTEND_ROUTES:
+        serve_static(handler, "frontend/pages/index.html")
+        return True
+
+    if path.endswith(".html"):
+        stripped = path.replace(".html", "")
+        if stripped in FRONTEND_ROUTES:
+            serve_static(handler, "frontend/pages/index.html")
+            return True
+    if path.startswith("/frontend/"):
+        serve_static(handler, path.lstrip("/"))
+        return True
+
+    return False
+
+
 class StudentRouter(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
@@ -27,6 +46,9 @@ class StudentRouter(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+
+        if handle_ui_routes(self, path):
+            return
 
        
         if path == "/api/students":
